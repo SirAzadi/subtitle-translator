@@ -3,3 +3,5 @@ pytorch
 fastapi
 uvicorn
 pysrt
+stable_whisper
+google-generativeai
