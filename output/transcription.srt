@@ -1,0 +1,823 @@
+1
+00:00:00,300 --> 00:00:02,260
+Co-routines are a fantastic part of Kotlin,
+
+2
+00:00:02,560 --> 00:00:04,920
+and yet many Kotlin developers struggle
+
+3
+00:00:04,920 --> 00:00:07,180
+to describe exactly what co-routines are.
+
+4
+00:00:07,900 --> 00:00:09,660
+Often we focus on what they do,
+
+5
+00:00:09,900 --> 00:00:11,900
+like async await and other background tasks.
+
+6
+00:00:12,780 --> 00:00:13,560
+So in this video,
+
+7
+00:00:13,880 --> 00:00:15,720
+we're going to put all of those things aside,
+
+8
+00:00:15,940 --> 00:00:17,100
+and we're going to focus on what the
+
+9
+00:00:17,100 --> 00:00:19,140
+essence of co-routines actually is.
+
+10
+00:00:19,200 --> 00:00:21,880
+We're going to distill them down to their core characteristics.
+
+11
+00:00:22,660 --> 00:00:23,680
+And by the end of this video,
+
+12
+00:00:24,000 --> 00:00:26,460
+you'll understand what makes a co-routine a co-routine.
+
+13
+00:00:27,360 --> 00:00:28,440
+So let's get started,
+
+14
+00:00:28,760 --> 00:00:29,900
+not with co-routines,
+
+15
+00:00:30,100 --> 00:00:31,720
+but with regular old functions,
+
+16
+00:00:31,720 --> 00:00:34,680
+and examine how execution typically
+
+17
+00:00:34,680 --> 00:00:35,940
+flows between different functions.
+
+18
+00:00:37,000 --> 00:00:38,220
+Now here I've got two functions.
+
+19
+00:00:38,960 --> 00:00:41,040
+In the main function, we're milking a few cows,
+
+20
+00:00:41,720 --> 00:00:42,900
+and in the middle of all that,
+
+21
+00:00:43,040 --> 00:00:44,840
+we're going to call another function where we feed some chickens.
+
+22
+00:00:45,900 --> 00:00:48,860
+Now any developer who's been writing code for more than a day or two
+
+23
+00:00:48,860 --> 00:00:52,160
+can tell you what the execution path is going to be for this code.
+
+24
+00:00:52,640 --> 00:00:53,620
+We're going to milk two cows,
+
+25
+00:00:53,940 --> 00:00:55,720
+and when we get to this function call,
+
+26
+00:00:57,000 --> 00:00:58,920
+we'll move into the feed chickens function,
+
+27
+00:00:59,540 --> 00:01:01,020
+and after this function runs,
+
+28
+00:01:01,100 --> 00:01:03,640
+execution is going to return back to the main function here,
+
+29
+00:01:04,100 --> 00:01:05,520
+and we finish milking the cows.
+
+30
+00:01:06,400 --> 00:01:06,720
+And of course,
+
+31
+00:01:06,740 --> 00:01:08,280
+we can verify this by running the code,
+
+32
+00:01:08,440 --> 00:01:10,380
+which shows us exactly what we expect.
+
+33
+00:01:10,740 --> 00:01:12,780
+We're milking two cows, feeding four chickens,
+
+34
+00:01:13,540 --> 00:01:14,720
+and then milking two more cows.
+
+35
+00:01:15,860 --> 00:01:18,580
+Okay, let's talk about this function call here
+
+36
+00:01:19,160 --> 00:01:20,020
+when we call feed chickens.
+
+37
+00:01:21,180 --> 00:01:23,300
+Now there are two sides to a function call.
+
+38
+00:01:24,160 --> 00:01:24,960
+First is the entry,
+
+39
+00:01:25,480 --> 00:01:26,880
+when the feed chickens
+
+40
+00:01:27,000 --> 00:01:27,720
+function is invoked,
+
+41
+00:01:27,880 --> 00:01:31,040
+execution is going to pass from main into feed chickens.
+
+42
+00:01:32,140 --> 00:01:32,980
+And then there's the exit,
+
+43
+00:01:33,420 --> 00:01:35,920
+which is when the feed chickens function completes,
+
+44
+00:01:36,440 --> 00:01:38,380
+execution passes back from feed
+
+45
+00:01:38,380 --> 00:01:40,320
+chickens into the main function again.
+
+46
+00:01:41,000 --> 00:01:43,000
+When feed chickens is invoked,
+
+47
+00:01:43,180 --> 00:01:45,740
+the state of the main function is still going to exist.
+
+48
+00:01:46,340 --> 00:01:48,560
+So even though the execution moves
+
+49
+00:01:48,560 --> 00:01:50,560
+over to the feed chickens function,
+
+50
+00:01:51,100 --> 00:01:53,080
+this cow variable still exists.
+
+51
+00:01:53,720 --> 00:01:55,760
+And the main function is just kind of paused
+
+52
+00:01:56,090 --> 00:01:56,980
+waiting for the feed chickens to come back.
+
+53
+00:01:57,000 --> 00:01:58,120
+So the feed chickens function to complete,
+
+54
+00:01:58,660 --> 00:01:59,260
+and once it does,
+
+55
+00:01:59,760 --> 00:02:02,240
+the cow variable will still have the same number in it.
+
+56
+00:02:02,980 --> 00:02:05,260
+Now what about when the feed chickens function returns?
+
+57
+00:02:06,280 --> 00:02:07,930
+Even though it's got this chicken variable,
+
+58
+00:02:08,660 --> 00:02:09,540
+once the function returns,
+
+59
+00:02:09,840 --> 00:02:11,460
+this variable is no longer going to exist.
+
+60
+00:02:12,100 --> 00:02:12,540
+In other words,
+
+61
+00:02:12,840 --> 00:02:15,020
+the state of this function is eliminated.
+
+62
+00:02:15,740 --> 00:02:17,960
+Now I'm really just describing the properties of a call stack,
+
+63
+00:02:18,240 --> 00:02:18,400
+right?
+
+64
+00:02:19,420 --> 00:02:20,680
+When the main function starts,
+
+65
+00:02:20,780 --> 00:02:22,820
+we've got a stack frame with a cow variable.
+
+66
+00:02:23,000 --> 00:02:24,580
+And then when we call feed chickens,
+
+67
+00:02:25,240 --> 00:02:26,980
+we get another frame on that stack.
+
+68
+00:02:27,120 --> 00:02:28,280
+With the chicken variable,
+
+69
+00:02:28,500 --> 00:02:29,520
+and then once that's done,
+
+70
+00:02:30,120 --> 00:02:31,830
+that stack frame is popped off the top
+
+71
+00:02:32,120 --> 00:02:33,800
+of the stack and its state vanishes.
+
+72
+00:02:34,540 --> 00:02:38,240
+So a function call pauses the function and preserves its state,
+
+73
+00:02:38,940 --> 00:02:41,420
+but a function return completes the
+
+74
+00:02:41,420 --> 00:02:43,120
+function and eliminates its state.
+
+75
+00:02:44,220 --> 00:02:46,360
+Now what if a function return could have
+
+76
+00:02:46,360 --> 00:02:48,360
+similar properties to a function call?
+
+77
+00:02:49,020 --> 00:02:49,560
+So in other words,
+
+78
+00:02:49,780 --> 00:02:53,040
+what if a function could yield its execution back to its collar,
+
+79
+00:02:53,060 --> 00:02:53,980
+like a return would,
+
+80
+00:02:54,660 --> 00:02:56,980
+but also pauses its execution and preserves its state.
+
+81
+00:02:57,020 --> 00:02:58,640
+As if it were making a function call.
+
+82
+00:02:59,500 --> 00:03:01,140
+And this is the essence of a co-routine,
+
+83
+00:03:01,360 --> 00:03:04,920
+the ability to pause its execution and preserve its state,
+
+84
+00:03:05,440 --> 00:03:06,860
+not just when calling another function,
+
+85
+00:03:07,260 --> 00:03:07,960
+but at any point.
+
+86
+00:03:08,940 --> 00:03:11,740
+So let's look at a very simple example of a co-routine.
+
+87
+00:03:12,420 --> 00:03:15,080
+Here we're still milking cows and feeding chickens,
+
+88
+00:03:15,840 --> 00:03:18,440
+but instead of a regular function call to feed the chickens,
+
+89
+00:03:18,440 --> 00:03:20,500
+we're feeding chickens within a co-routine.
+
+90
+00:03:21,780 --> 00:03:23,700
+Now I've created a few helper functions here,
+
+91
+00:03:24,160 --> 00:03:25,240
+like create co-routine,
+
+92
+00:03:25,580 --> 00:03:26,340
+yield and complete.
+
+93
+00:03:26,760 --> 00:03:26,980
+And then we're going to have a couple
+
+94
+00:03:26,980 --> 00:03:29,440
+of different kinds of functions. And I did this to keep the example here clean.
+
+95
+00:03:30,400 --> 00:03:31,100
+And in a moment,
+
+96
+00:03:31,140 --> 00:03:34,120
+I'll reveal exactly what these functions are all doing,
+
+97
+00:03:34,300 --> 00:03:34,700
+but for now,
+
+98
+00:03:34,760 --> 00:03:36,840
+I just want us to focus on the execution flow.
+
+99
+00:03:37,340 --> 00:03:38,580
+Now in the previous code listing,
+
+100
+00:03:39,180 --> 00:03:40,160
+we milked two cows,
+
+101
+00:03:40,800 --> 00:03:42,140
+and then we fed all four chickens,
+
+102
+00:03:42,620 --> 00:03:44,420
+and then we came back and milked two more cows.
+
+103
+00:03:45,140 --> 00:03:46,140
+But in this code,
+
+104
+00:03:46,980 --> 00:03:49,540
+the execution is going to bounce back and forth between the
+
+105
+00:03:49,540 --> 00:03:52,160
+two functions so that we'll milk a cow and then feed a
+
+106
+00:03:52,160 --> 00:03:54,720
+chicken and then milk a cow and then feed a chicken and so on.
+
+107
+00:03:59,160 --> 00:04:00,060
+So again,
+
+108
+00:04:00,220 --> 00:04:02,840
+the big difference here is that this feed chickens
+
+109
+00:04:02,910 --> 00:04:06,080
+is able to return execution back to its collar
+
+110
+00:04:06,080 --> 00:04:08,760
+and pause its execution and preserve its state.
+
+111
+00:04:09,140 --> 00:04:11,080
+Just like if it were making a function call,
+
+112
+00:04:11,220 --> 00:04:12,440
+but instead of calling another function,
+
+113
+00:04:12,800 --> 00:04:14,980
+it's returning the execution back to its collar.
+
+114
+00:04:16,360 --> 00:04:19,380
+Now whereas our previous code fed all the chickens in one go,
+
+115
+00:04:19,960 --> 00:04:22,160
+you can see this version interleaves the
+
+116
+00:04:22,160 --> 00:04:24,300
+tasks of milking cows and feeding chickens.
+
+117
+00:04:30,570 --> 00:04:31,020
+Now
+
+118
+00:04:31,920 --> 00:04:33,860
+if you're like Mr. Grumpy or Calstrunt man,
+
+119
+00:04:34,020 --> 00:04:34,720
+you might be saying,
+
+120
+00:04:35,020 --> 00:04:35,280
+Dave,
+
+121
+00:04:35,700 --> 00:04:37,560
+why the first code's not Conqueror's Nen if it was
+
+122
+00:04:37,560 --> 00:04:39,540
+also milk and them cows and feed and them chickens.
+
+123
+00:04:40,000 --> 00:04:40,540
+Well,
+
+124
+00:04:40,540 --> 00:04:42,800
+our first code example with a regular function call,
+
+125
+00:04:42,980 --> 00:04:44,960
+we were also milking cows and feeding chickens.
+
+126
+00:04:45,600 --> 00:04:46,580
+So I guess you could say we were
+
+127
+00:04:46,580 --> 00:04:48,440
+doing two tasks over a period of time,
+
+128
+00:04:48,580 --> 00:04:51,380
+but a diagram of that work would look like
+
+129
+00:04:51,380 --> 00:04:53,840
+this where all of the chickens are fed at once.
+
+130
+00:04:54,740 --> 00:04:55,950
+In order to be considered concurrent,
+
+131
+00:04:56,580 --> 00:04:56,980
+we need to be able to do that.
+
+132
+00:04:57,000 --> 00:04:58,860
+We'll be able to bounce back and forth between the tasks,
+
+133
+00:04:59,160 --> 00:05:00,840
+doing a little bit of each task each time.
+
+134
+00:05:02,080 --> 00:05:02,830
+Now like I said earlier,
+
+135
+00:05:03,080 --> 00:05:04,020
+to keep the example clean,
+
+136
+00:05:04,580 --> 00:05:07,240
+I've omitted a small amount of implementation here,
+
+137
+00:05:07,420 --> 00:05:09,020
+but just to put all of my cards on the table,
+
+138
+00:05:09,700 --> 00:05:11,020
+let's see what I've been hiding from you.
+
+139
+00:05:12,160 --> 00:05:13,340
+We've got four functions here.
+
+140
+00:05:14,580 --> 00:05:17,340
+And the first is the CreateCodeRoutine function.
+
+141
+00:05:17,860 --> 00:05:20,640
+And this one I created as just kind of a wrapper
+
+142
+00:05:21,100 --> 00:05:23,400
+around an extension function with a similar name.
+
+143
+00:05:24,500 --> 00:05:26,760
+So let's use refactoring tools to
+
+144
+00:05:27,040 --> 00:05:28,040
+outline this function call.
+
+145
+00:05:30,500 --> 00:05:32,780
+Since CreateCodeRoutine uninterested is an
+
+146
+00:05:32,780 --> 00:05:34,920
+extension function on a suspend function,
+
+147
+00:05:35,400 --> 00:05:36,880
+we're going to need to also make sure we
+
+148
+00:05:36,880 --> 00:05:38,880
+add the suspend modifier before this block.
+
+149
+00:05:40,900 --> 00:05:41,680
+Okay, next,
+
+150
+00:05:42,300 --> 00:05:46,300
+this resume function is just a shortcut for resuming with a unit,
+
+151
+00:05:46,940 --> 00:05:47,780
+and we can easily
+
+152
+00:05:48,320 --> 00:05:49,340
+inline that as well.
+
+153
+00:05:51,240 --> 00:05:53,920
+That just leaves two more yield and complete,
+
+154
+00:05:54,400 --> 00:05:55,100
+which are both shortcuts
+
+155
+00:05:55,380 --> 00:05:56,890
+to a function named suspendCodeRoutine.
+
+156
+00:05:58,240 --> 00:05:59,980
+When the lambda that we pass to this function
+
+157
+00:05:59,980 --> 00:06:03,380
+evaluates to this special co-routine suspended value,
+
+158
+00:06:03,860 --> 00:06:05,190
+then the co-routine is going to be paused.
+
+159
+00:06:05,780 --> 00:06:06,060
+Otherwise,
+
+160
+00:06:06,260 --> 00:06:08,820
+we can just invoke resume inside this block to finish it out.
+
+161
+00:06:11,940 --> 00:06:13,990
+So here it is with no hidden implementation.
+
+162
+00:06:14,700 --> 00:06:17,560
+Note that we haven't used async or launch or run blocking.
+
+163
+00:06:18,080 --> 00:06:19,430
+We haven't referenced any dispatchers.
+
+164
+00:06:19,600 --> 00:06:21,640
+We've not dealt with any jobs or deferred.
+
+165
+00:06:22,060 --> 00:06:25,200
+And in fact, this project doesn't even depend on
+
+166
+00:06:25,280 --> 00:06:26,920
+the cotlonex.co routines library.
+
+167
+00:06:27,560 --> 00:06:30,940
+So we're calling some very low level functions that we normally
+
+168
+00:06:30,940 --> 00:06:33,680
+probably wouldn't call from our application code directly.
+
+169
+00:06:34,400 --> 00:06:35,220
+But by doing that,
+
+170
+00:06:35,320 --> 00:06:38,340
+we've gotten to see the essence of what co-routines actually is.
+
+171
+00:06:39,180 --> 00:06:40,580
+Building upon this foundation,
+
+172
+00:06:41,080 --> 00:06:43,400
+there are lots of ways we can apply co-routines,
+
+173
+00:06:43,560 --> 00:06:45,320
+including things like sequence generators,
+
+174
+00:06:45,660 --> 00:06:46,320
+deeper cursion,
+
+175
+00:06:46,920 --> 00:06:48,060
+running code simultaneously,
+
+176
+00:06:48,640 --> 00:06:49,880
+async away, and a whole lot more.
+
+177
+00:06:50,120 --> 00:06:52,340
+And between the standard library and
+
+178
+00:06:52,340 --> 00:06:53,920
+the cotlonex.co routines library,
+
+179
+00:06:54,280 --> 00:06:55,180
+we get all of those
+
+180
+00:06:55,280 --> 00:06:55,380
+features.
+
+181
+00:06:56,300 --> 00:06:57,000
+But as we've seen,
+
+182
+00:06:57,340 --> 00:06:59,680
+the essence of co-routines is actually quite simple.
+
+183
+00:07:00,040 --> 00:07:02,500
+If you're looking for more information about co-routines,
+
+184
+00:07:02,960 --> 00:07:05,840
+Chapter 20 of Kotlin and Illustrated Guide covers the
+
+185
+00:07:05,840 --> 00:07:08,400
+most important concepts that you need to know about co
+
+186
+00:07:08,400 --> 00:07:11,080
+-routines in order to be effective with them day to day.
+
+187
+00:07:11,700 --> 00:07:13,920
+If you've purchased the lean pub edition of the book,
+
+188
+00:07:14,280 --> 00:07:17,600
+then you've got early access to a draft of Chapter 20 right now.
+
+189
+00:07:18,180 --> 00:07:19,280
+If you'd like to pick up the book,
+
+190
+00:07:19,600 --> 00:07:21,730
+you can get it at book.typealius.com.
+
+191
+00:07:22,620 --> 00:07:23,180
+Or if you'd rather,
+
+192
+00:07:23,360 --> 00:07:23,600
+of course,
+
+193
+00:07:23,700 --> 00:07:26,480
+you can just wait until it lands in the online edition of the book,
+
+194
+00:07:26,820 --> 00:07:28,920
+which will probably happen sometime around the end of June.
+
+195
+00:07:29,360 --> 00:07:29,560
+Also,
+
+196
+00:07:29,620 --> 00:07:31,680
+you should join hundreds of other Kotlin developers
+
+197
+00:07:31,680 --> 00:07:34,000
+who have signed up for my new email newsletter,
+
+198
+00:07:34,480 --> 00:07:36,820
+where you can get the inside scoop about any new articles,
+
+199
+00:07:37,220 --> 00:07:37,440
+videos,
+
+200
+00:07:37,800 --> 00:07:39,520
+and other fun projects that I'm working on.
+
+201
+00:07:40,440 --> 00:07:41,580
+Thanks so much for hanging out with me today,
+
+202
+00:07:41,840 --> 00:07:43,080
+and I will see you next time.
+
+203
+00:07:52,620 --> 00:07:53,380
+I'm Eric BDS Software,
+
+204
+00:07:53,960 --> 00:07:56,280
+and get early access to new chapters at their rip.
+
+205
+00:07:56,740 --> 00:07:58,380
+You can pick up your copy today.
+
+206
+00:07:58,660 --> 00:08:00,880
+Just go to book.typealius.com.
